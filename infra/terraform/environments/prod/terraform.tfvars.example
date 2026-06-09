@@ -1,0 +1,62 @@
+aws_profile = "mcp"
+aws_region  = "us-east-1"
+
+name        = "private-mcp"
+environment = "prod"
+
+vpc_id = "vpc-00a0bb566f620d017"
+
+private_subnets = {
+  private_a = {
+    availability_zone = "us-east-1a"
+    cidr_block        = "172.31.96.0/20"
+  }
+  private_b = {
+    availability_zone = "us-east-1b"
+    cidr_block        = "172.31.112.0/20"
+  }
+}
+
+alb_ingress_cidr_blocks = [
+  "172.31.0.0/16"
+]
+
+create_quicksight_vpc_connection = true
+quicksight_vpc_connection_id     = "private-mcp-vpc"
+quicksight_vpc_connection_name   = "Private MCP VPC"
+
+domain_name          = "mcp.apppayvn.pngha.io.vn"
+hosted_zone_name     = "apppayvn.pngha.io.vn."
+route53_private_zone = true
+
+enable_https           = false
+create_acm_certificate = false
+create_route53_records = true
+
+container_port = 8080
+cpu            = 512
+memory         = 1024
+desired_count  = 0
+
+environment_variables = {
+  AWS_REGION = "us-east-1"
+}
+
+secrets = {}
+
+create_mock_data_sources = true
+mock_rds_database_name   = "mockdata"
+mock_rds_username        = "mcp_admin"
+mock_s3_key              = "mock/orders.json"
+
+create_cognito_oauth = true
+cognito_callback_urls = [
+  "https://example.com/replace-with-amazon-quick-redirect-url"
+]
+cognito_logout_urls = []
+
+default_tags = {
+  Project     = "private-mcp"
+  Environment = "prod"
+  ManagedBy   = "terraform"
+}
