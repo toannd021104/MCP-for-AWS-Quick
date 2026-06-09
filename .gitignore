@@ -1,6 +1,7 @@
 .terraform/
 .venv/
 app/.venv/
+app/code/
 __pycache__/
 *.py[cod]
 *.tfstate

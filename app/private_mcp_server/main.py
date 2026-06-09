@@ -5,11 +5,9 @@ import os
 from typing import Any
 
 import boto3
-import jwt
 import psycopg
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from jwt import PyJWKClient
 from pydantic import BaseModel
 
 
@@ -21,15 +19,6 @@ RDS_HOST = os.getenv("RDS_HOST")
 RDS_PORT = int(os.getenv("RDS_PORT", "5432"))
 RDS_DB_NAME = os.getenv("RDS_DB_NAME", "mockdata")
 RDS_SECRET_JSON = os.getenv("RDS_SECRET_JSON")
-OAUTH_ENABLED = os.getenv("OAUTH_ENABLED", "false").lower() == "true"
-OAUTH_ISSUER = os.getenv("OAUTH_ISSUER")
-OAUTH_AUDIENCES = [item.strip() for item in os.getenv("OAUTH_AUDIENCES", os.getenv("OAUTH_AUDIENCE", "")).split(",") if item.strip()]
-OAUTH_JWKS_URL = os.getenv("OAUTH_JWKS_URL")
-OAUTH_AUTH_URL = os.getenv("OAUTH_AUTH_URL")
-OAUTH_TOKEN_URL = os.getenv("OAUTH_TOKEN_URL")
-OAUTH_SCOPE = os.getenv("OAUTH_SCOPE", "private-mcp/invoke")
-MCP_RESOURCE_URL = os.getenv("MCP_RESOURCE_URL")
-JWK_CLIENT = PyJWKClient(OAUTH_JWKS_URL) if OAUTH_JWKS_URL else None
 
 app = FastAPI(title=APP_NAME, version=APP_VERSION)
 
@@ -81,68 +70,12 @@ async def root() -> dict[str, str]:
 
 @app.post("/mcp")
 async def mcp_endpoint(request: Request) -> JSONResponse:
-    if OAUTH_ENABLED:
-        auth_error = verify_authorization(request)
-        if auth_error is not None:
-            return auth_error
-
     body = await request.json()
 
     if isinstance(body, list):
         return jsonrpc_error(None, -32600, "Batch requests are not supported")
 
     return await handle_jsonrpc(body)
-
-
-def verify_authorization(request: Request) -> JSONResponse | None:
-    authorization = request.headers.get("authorization", "")
-    if not authorization.lower().startswith("bearer "):
-        return oauth_challenge(request)
-
-    token = authorization.split(" ", 1)[1].strip()
-    try:
-        if JWK_CLIENT is None or OAUTH_ISSUER is None:
-            raise RuntimeError("OAuth issuer/JWKS is not configured")
-
-        signing_key = JWK_CLIENT.get_signing_key_from_jwt(token)
-        claims = jwt.decode(
-            token,
-            signing_key.key,
-            algorithms=["RS256"],
-            issuer=OAUTH_ISSUER,
-            options={"verify_aud": False},
-        )
-        token_use = claims.get("token_use")
-        if token_use == "id" and OAUTH_AUDIENCES and claims.get("aud") not in OAUTH_AUDIENCES:
-            raise RuntimeError("Invalid token audience")
-        if token_use == "access" and OAUTH_AUDIENCES and claims.get("client_id") not in OAUTH_AUDIENCES:
-            raise RuntimeError("Invalid token client_id")
-    except Exception as exc:
-        return oauth_challenge(request, str(exc))
-
-    return None
-
-
-def oauth_challenge(request: Request, error_description: str | None = None) -> JSONResponse:
-    metadata_url = str(request.url_for("oauth_protected_resource_metadata"))
-    headers = {
-        "WWW-Authenticate": f'Bearer realm="private-mcp", resource_metadata="{metadata_url}"'
-    }
-    payload: dict[str, Any] = {"error": "unauthorized"}
-    if error_description:
-        payload["error_description"] = error_description
-    return JSONResponse(payload, status_code=status.HTTP_401_UNAUTHORIZED, headers=headers)
-
-
-@app.get("/.well-known/oauth-protected-resource")
-async def oauth_protected_resource_metadata(request: Request) -> dict[str, Any]:
-    resource_url = MCP_RESOURCE_URL or str(request.url_for("mcp_endpoint"))
-    return {
-        "resource": resource_url,
-        "authorization_servers": [OAUTH_ISSUER] if OAUTH_ISSUER else [],
-        "scopes_supported": [OAUTH_SCOPE],
-        "bearer_methods_supported": ["header"],
-    }
 
 
 async def handle_jsonrpc(raw: Any) -> JSONResponse:
@@ -162,11 +95,6 @@ async def handle_jsonrpc(raw: Any) -> JSONResponse:
                 "serverInfo": {
                     "name": APP_NAME,
                     "version": APP_VERSION,
-                },
-                "oauth": {
-                    "enabled": OAUTH_ENABLED,
-                    "authorizationUrl": OAUTH_AUTH_URL,
-                    "tokenUrl": OAUTH_TOKEN_URL,
                 },
             },
         )
