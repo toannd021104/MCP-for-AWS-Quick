@@ -44,7 +44,7 @@ environment_variables = {
 
 secrets = {}
 
-create_mock_data_sources = true
+create_mock_data_sources = false
 mock_rds_database_name   = "mockdata"
 mock_rds_username        = "mcp_admin"
 mock_s3_key              = "mock/orders.json"

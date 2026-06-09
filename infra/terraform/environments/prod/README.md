@@ -12,6 +12,17 @@ Amazon Quick
 
 The ALB and ECS tasks are private. ECS tasks do not receive public IP addresses. AWS service access from the private subnets is provided through VPC endpoints for ECR, CloudWatch Logs, Secrets Manager, and S3.
 
+## Remote state
+
+This environment stores Terraform state in S3:
+
+- Bucket: `private-mcp-terraform-state-307711587176-us-east-1`
+- Key: `private-mcp/prod/terraform.tfstate`
+- Region: `us-east-1`
+- AWS profile: `mcp`
+
+The backend bucket is bootstrapped outside this stack because it stores the stack state. It has S3 versioning, server-side encryption, public access blocking, and Terraform S3 lockfile locking enabled.
+
 ## First-time setup
 
 Create a real tfvars file:

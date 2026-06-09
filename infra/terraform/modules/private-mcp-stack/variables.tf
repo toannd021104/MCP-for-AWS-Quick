@@ -129,7 +129,7 @@ variable "secrets" {
 variable "create_mock_data_sources" {
   description = "Whether to create cheap mock S3 and RDS data sources for MCP testing."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "mock_rds_database_name" {
