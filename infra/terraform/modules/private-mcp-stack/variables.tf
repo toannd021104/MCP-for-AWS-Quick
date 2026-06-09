@@ -153,7 +153,7 @@ variable "mock_s3_key" {
 variable "create_cognito_oauth" {
   description = "Whether to create Cognito OAuth resources for the MCP connector."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cognito_callback_urls" {

@@ -13,13 +13,15 @@ locals {
     var.create_acm_certificate ? aws_acm_certificate_validation.this[0].certificate_arn : var.certificate_arn
   ) : null
 
-  endpoint_services = toset([
-    "cognito-idp",
-    "ecr.api",
-    "ecr.dkr",
-    "logs",
-    "secretsmanager"
-  ])
+  endpoint_services = toset(concat(
+    [
+      "ecr.api",
+      "ecr.dkr",
+      "logs",
+      "secretsmanager"
+    ],
+    var.create_cognito_oauth ? ["cognito-idp"] : []
+  ))
 
   mock_environment_variables = var.create_mock_data_sources ? {
     MOCK_S3_BUCKET = aws_s3_bucket.mock_data[0].bucket

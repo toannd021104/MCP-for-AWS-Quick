@@ -49,10 +49,8 @@ mock_rds_database_name   = "mockdata"
 mock_rds_username        = "mcp_admin"
 mock_s3_key              = "mock/orders.json"
 
-create_cognito_oauth = true
-cognito_callback_urls = [
-  "https://example.com/replace-with-amazon-quick-redirect-url"
-]
+create_cognito_oauth  = false
+cognito_callback_urls = []
 cognito_logout_urls = []
 
 default_tags = {
