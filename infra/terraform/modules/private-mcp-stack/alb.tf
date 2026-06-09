@@ -99,3 +99,10 @@ resource "aws_route53_record" "alb" {
     evaluate_target_health = true
   }
 }
+
+resource "aws_route53_zone_association" "this" {
+  count = var.create_route53_records && var.route53_private_zone ? 1 : 0
+
+  zone_id = data.aws_route53_zone.this[0].zone_id
+  vpc_id  = var.vpc_id
+}
