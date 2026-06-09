@@ -7,7 +7,7 @@ from typing import Any
 import boto3
 import psycopg
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 
@@ -68,14 +68,43 @@ async def root() -> dict[str, str]:
     return {"name": APP_NAME, "mcp": "/mcp", "health": "/health"}
 
 
-@app.post("/mcp")
-async def mcp_endpoint(request: Request) -> JSONResponse:
+@app.post("/mcp", response_model=None)
+async def mcp_endpoint(request: Request):
     body = await request.json()
 
     if isinstance(body, list):
-        return jsonrpc_error(None, -32600, "Batch requests are not supported")
+        response = jsonrpc_error(None, -32600, "Batch requests are not supported")
+        return mcp_transport_response(request, response)
 
-    return await handle_jsonrpc(body)
+    response = await handle_jsonrpc(body)
+    return mcp_transport_response(request, response)
+
+
+@app.get("/mcp")
+async def mcp_get() -> JSONResponse:
+    return JSONResponse(
+        {"error": "Method not allowed. Use POST."},
+        status_code=405,
+    )
+
+
+@app.delete("/mcp")
+async def mcp_delete() -> Response:
+    return Response(status_code=200)
+
+
+def mcp_transport_response(request: Request, response: JSONResponse):
+    accept = request.headers.get("accept", "")
+    if "text/event-stream" not in accept:
+        return response
+
+    body = response.body.decode("utf-8")
+    return Response(
+        f"event: message\ndata: {body}\n\n",
+        media_type="text/event-stream",
+        headers={"cache-control": "no-cache"},
+        status_code=response.status_code,
+    )
 
 
 async def handle_jsonrpc(raw: Any) -> JSONResponse:
@@ -90,7 +119,9 @@ async def handle_jsonrpc(raw: Any) -> JSONResponse:
             {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {
-                    "tools": {}
+                    "tools": {
+                        "listChanged": True,
+                    }
                 },
                 "serverInfo": {
                     "name": APP_NAME,
