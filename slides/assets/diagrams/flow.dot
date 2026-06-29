@@ -1,0 +1,30 @@
+digraph flow {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [fontname="Helvetica", fontsize=12, style="filled,rounded", shape=box, penwidth=0];
+  edge [fontname="Helvetica", fontsize=10, color="#6B7280"];
+
+  user  [label="User\n\"I got a 500 error\"", fillcolor="#1F2937", fontcolor=white];
+  quick [label="Amazon Quick", fillcolor="#4F46E5", fontcolor=white];
+
+  subgraph cluster_vpc {
+    label="Private network (VPC)";
+    fontname="Helvetica"; fontsize=12; fontcolor="#065F46";
+    style="filled,rounded"; fillcolor="#ECFDF5"; color="#10B981"; penwidth=2;
+
+    dns  [label="Resolve private name\n(Resolver)", fillcolor="#34D399", fontcolor="#064E3B"];
+    alb  [label="Secure gateway\n(ALB + TLS)", fillcolor="#10B981", fontcolor=white];
+    mcp  [label="MCP Server", fillcolor="#059669", fontcolor=white];
+    jg   [label="Jaeger\n(trace data)", fillcolor="#047857", fontcolor=white];
+  }
+
+  user -> quick [label=" ask"];
+  quick -> dns  [label=" 1. find address"];
+  quick -> alb  [label=" 2. call (HTTPS)"];
+  alb -> mcp    [label=" 3. forward"];
+  mcp -> jg     [label=" 4. query"];
+  jg -> quick   [label=" 5. root cause", style=dashed, constraint=false, color="#059669"];
+
+  label="\nIncident investigation flow — entirely inside the private network";
+  fontname="Helvetica"; fontsize=13; fontcolor="#111827";
+}

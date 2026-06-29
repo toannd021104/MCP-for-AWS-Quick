@@ -1,0 +1,15 @@
+digraph problem {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Helvetica", fontsize=13, style="filled,rounded", shape=box, penwidth=0];
+
+  quick [label="Amazon Quick\n(AI assistant)", fillcolor="#4F46E5", fontcolor=white];
+  net   [label="Public Internet", fillcolor="#EF4444", fontcolor=white, shape=ellipse];
+  data  [label="Sensitive\ninternal data", fillcolor="#DC2626", fontcolor=white];
+
+  quick -> net [label="  request", fontname="Helvetica", fontsize=11, color="#6B7280"];
+  net -> data [label="  exposed!", fontname="Helvetica", fontsize=11, color="#EF4444", fontcolor="#EF4444"];
+
+  label="\nProblem: sensitive data travels across the public Internet";
+  fontname="Helvetica"; fontsize=14; fontcolor="#111827";
+}

@@ -1,0 +1,25 @@
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+*.tfvars
+!*.tfvars.example
+
+# SSH keys / secrets
+*.pem
+*.key
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# OS
+.DS_Store
+
+# MCP server has its own repo: github.com/toannd021104/jaeger-mcp
+jaeger-mcp-server/

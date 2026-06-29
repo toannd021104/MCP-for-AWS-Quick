@@ -1,0 +1,26 @@
+digraph layers {
+  rankdir=TB;
+  bgcolor="transparent";
+  node [fontname="Helvetica", fontsize=12, style="filled,rounded", shape=box, penwidth=0, width=3.4];
+
+  subgraph cluster_l1 {
+    label="Layer 1 — NETWORK protection (always on)";
+    fontname="Helvetica"; fontsize=12; fontcolor="#1E3A8A";
+    style="filled,rounded"; fillcolor="#EFF6FF"; color="#3B82F6"; penwidth=2;
+    n1 [label="Only in-VPC components can reach it", fillcolor="#3B82F6", fontcolor=white];
+    n2 [label="Hostname resolves privately only", fillcolor="#3B82F6", fontcolor=white];
+    n3 [label="Tight per-component permissions", fillcolor="#3B82F6", fontcolor=white];
+    n1 -> n2 -> n3 [style=invis];
+  }
+
+  subgraph cluster_l2 {
+    label="Layer 2 — IDENTITY protection (optional)";
+    fontname="Helvetica"; fontsize=12; fontcolor="#92400E";
+    style="filled,rounded"; fillcolor="#FFFBEB"; color="#F59E0B"; penwidth=2;
+    m1 [label="OAuth: Quick must present a valid token", fillcolor="#F59E0B", fontcolor=white];
+    m2 [label="Ideal when many teams share infra", fillcolor="#F59E0B", fontcolor=white];
+    m1 -> m2 [style=invis];
+  }
+
+  n3 -> m1 [style=invis];
+}

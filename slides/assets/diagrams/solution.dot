@@ -1,0 +1,24 @@
+digraph solution {
+  rankdir=LR;
+  bgcolor="transparent";
+  node [fontname="Helvetica", fontsize=13, style="filled,rounded", shape=box, penwidth=0];
+
+  quick [label="Amazon Quick", fillcolor="#4F46E5", fontcolor=white];
+
+  subgraph cluster_vpc {
+    label="Private network (VPC) — data never leaves here";
+    fontname="Helvetica"; fontsize=13; fontcolor="#065F46";
+    style="filled,rounded"; fillcolor="#ECFDF5"; color="#10B981"; penwidth=2;
+
+    alb  [label="Secure gateway\n(ALB + TLS)", fillcolor="#10B981", fontcolor=white];
+    mcp  [label="MCP Server", fillcolor="#059669", fontcolor=white];
+    data [label="Internal system\n(Jaeger)", fillcolor="#047857", fontcolor=white];
+
+    alb -> mcp -> data;
+  }
+
+  quick -> alb [label="  private\n  connection", fontname="Helvetica", fontsize=11, color="#10B981", fontcolor="#065F46"];
+
+  label="\nSolution: Private MCP — AI reaches data inside the security perimeter";
+  fontname="Helvetica"; fontsize=14; fontcolor="#111827";
+}

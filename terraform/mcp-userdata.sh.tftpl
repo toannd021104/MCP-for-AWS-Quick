@@ -1,0 +1,48 @@
+#!/bin/bash
+set -euxo pipefail
+
+# Install dependencies
+dnf install -y docker python3.11 git
+systemctl enable --now docker
+
+# Jaeger all-in-one
+docker run -d --name jaeger --restart=always \
+  -p 16686:16686 -p 4317:4317 -p 4318:4318 -p 9411:9411 \
+  jaegertracing/all-in-one:latest
+
+# MCP server (FastAPI/uvicorn) serving Jaeger tools on :${mcp_port}
+cd /home/ec2-user
+%{ if mcp_repo_url != "" ~}
+git clone ${mcp_repo_url} mcp-server
+cd mcp-server
+python3.11 -m venv venv
+./venv/bin/pip install -r requirements.txt
+chown -R ec2-user:ec2-user /home/ec2-user/mcp-server
+
+cat >/etc/systemd/system/jaeger-mcp.service <<UNIT
+[Unit]
+Description=Jaeger MCP Server
+After=network.target docker.service
+
+[Service]
+Environment=PORT=${mcp_port}
+Environment=JAEGER_URL=http://localhost:16686
+Environment=AUTH_MODE=${auth_mode}
+Environment=OAUTH_ISSUER=${oauth_issuer}
+Environment=OAUTH_JWKS_URL=${oauth_jwks_url}
+Environment=OAUTH_CLIENT_ID=${oauth_client_id}
+Environment=OAUTH_REQUIRED_SCOPE=${oauth_required_scope}
+ExecStart=/home/ec2-user/mcp-server/venv/bin/python main.py
+WorkingDirectory=/home/ec2-user/mcp-server
+User=ec2-user
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now jaeger-mcp
+%{ else ~}
+echo "No mcp_repo_url provided; skipping MCP server clone/start. Set var.mcp_repo_url to deploy the app."
+%{ endif ~}
